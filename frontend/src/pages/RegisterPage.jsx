@@ -7,7 +7,7 @@ import { FiUser, FiMail, FiLock, FiPhone } from 'react-icons/fi'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
-    name: '', email: '', password: '', phone: '', age: '', bloodGroup: ''
+    name: '', email: '', password: '', phone: '', countryCode: '+91', age: '', bloodGroup: ''
   })
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -17,7 +17,8 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const payload = { ...form, age: form.age ? parseInt(form.age) : null }
+      const finalPhone = form.phone ? `${form.countryCode} ${form.phone}` : ''
+      const payload = { ...form, phone: finalPhone, age: form.age ? parseInt(form.age) : null }
       const res = await authService.register(payload)
       login(res.data.data)
       toast.success('Account created! Welcome 🎉')
@@ -69,27 +70,42 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-span-2">
-                <label className="block text-white/60 text-sm mb-2">Password *</label>
+                <label className="block text-white/60 text-sm mb-2">Password * <span className="text-xs text-white/40">(8+ characters)</span></label>
                 <div className="relative">
                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-                  <input type="password" placeholder="Min. 6 characters" className="input-field pl-10"
-                    value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+                  <input type="password" placeholder="Strong password (min 8 chars)" className="input-field pl-10"
+                    value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength="8" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-white/60 text-sm mb-2">Phone</label>
-                <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-                  <input type="tel" placeholder="+91 98765..." className="input-field pl-10"
-                    value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block text-white/60 text-sm mb-2">Mobile Number</label>
+                <div className="flex gap-2">
+                  <select className="input-field w-24 px-2" value={form.countryCode} 
+                    onChange={(e) => setForm({ ...form, countryCode: e.target.value })}>
+                    <option value="+91" className="bg-slate-800 text-white">IN (+91)</option>
+                    <option value="+1" className="bg-slate-800 text-white">US (+1)</option>
+                    <option value="+44" className="bg-slate-800 text-white">UK (+44)</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                    <input type="tel" placeholder="9876543210" className="input-field pl-10"
+                      value={form.phone} 
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })} 
+                      maxLength={form.countryCode === '+91' ? 10 : 15}
+                      minLength={form.countryCode === '+91' ? 10 : 5}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
+              <div className="col-span-2 sm:col-span-1">
                 <label className="block text-white/60 text-sm mb-2">Age</label>
                 <input type="number" placeholder="25" min="1" max="120" className="input-field"
-                  value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+                  value={form.age} onChange={(e) => {
+                    const val = e.target.value.slice(0, 3)
+                    setForm({ ...form, age: val })
+                  }} />
               </div>
 
               <div className="col-span-2">
