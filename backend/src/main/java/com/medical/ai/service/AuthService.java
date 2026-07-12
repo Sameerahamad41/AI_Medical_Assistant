@@ -29,6 +29,10 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
+        com.medical.ai.entity.Role assignedRole = request.getEmail().equalsIgnoreCase("sameerahamadbagalad786@gmail.com") 
+                ? com.medical.ai.entity.Role.ADMIN 
+                : com.medical.ai.entity.Role.USER;
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -36,6 +40,7 @@ public class AuthService {
                 .phone(request.getPhone())
                 .age(request.getAge())
                 .bloodGroup(request.getBloodGroup())
+                .role(assignedRole)
                 .build();
 
         userRepository.save(user);

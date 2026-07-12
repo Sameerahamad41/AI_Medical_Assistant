@@ -96,8 +96,8 @@ export default function RegisterPage() {
                 <label className="block text-white/60 text-sm mb-2">Blood Group</label>
                 <select className="input-field" value={form.bloodGroup}
                   onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}>
-                  <option value="">Select blood group</option>
-                  {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                  <option value="" className="bg-slate-800 text-white">Select blood group</option>
+                  {bloodGroups.map(bg => <option key={bg} value={bg} className="bg-slate-800 text-white">{bg}</option>)}
                 </select>
               </div>
             </div>
