@@ -54,3 +54,7 @@ export const appointmentService = {
   bookAppointment: (data) => api.post('/appointments/book', data),
   recommendDoctors: (symptoms) => api.post('/appointments/recommend', { symptoms }),
 }
+
+export const locationService = {
+  getNearbyHospitals: (lat, lon) => api.get(`/location/hospitals?lat=${lat}&lon=${lon}`),
+}

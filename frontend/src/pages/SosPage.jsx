@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FiPhoneCall, FiMapPin, FiActivity, FiNavigation, FiHeart, FiAlertTriangle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import { locationService } from '../services/services'
 
 const FIRST_AID_GUIDES = [
   {
@@ -109,10 +110,9 @@ export default function SosPage() {
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
     try {
-      // Find hospitals within 10000 meters (10km), using nwr (node/way/relation) to catch building polygons
-      const query = `[out:json];nwr(around:10000,${lat},${lon})[amenity=hospital];out center;`
-      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
-      const data = await res.json()
+      // Find hospitals via our backend proxy to avoid CORS
+      const res = await locationService.getNearbyHospitals(lat, lon)
+      const data = res.data
       
       const hospitalList = data.elements.map(el => {
         const elLat = el.lat || el.center?.lat
