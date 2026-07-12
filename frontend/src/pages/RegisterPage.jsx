@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/services'
 import toast from 'react-hot-toast'
-import { FiUser, FiMail, FiLock, FiPhone } from 'react-icons/fi'
+import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
     name: '', email: '', password: '', phone: '', countryCode: '+91', age: '', bloodGroup: ''
   })
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -70,11 +71,27 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-span-2">
-                <label className="block text-white/60 text-sm mb-2">Password * <span className="text-xs text-white/40">(8+ characters)</span></label>
+                <label className="block text-white/60 text-sm mb-2">Password * <span className="text-xs text-white/40">(Min 8 chars, 1 uppercase, 1 special character)</span></label>
                 <div className="relative">
                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-                  <input type="password" placeholder="Strong password (min 8 chars)" className="input-field pl-10"
-                    value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength="8" />
+                  <input 
+                    type={showPassword ? 'text' : 'password'} 
+                    placeholder="Strong password..." 
+                    className="input-field pl-10 pr-10"
+                    value={form.password} 
+                    onChange={(e) => setForm({ ...form, password: e.target.value })} 
+                    required 
+                    minLength="8" 
+                    pattern="(?=.*[A-Z])(?=.*[!@#$&*]).{8,}"
+                    title="Must contain at least 8 characters, one uppercase letter, and one special character (!@#$&*)"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
                 </div>
               </div>
 
