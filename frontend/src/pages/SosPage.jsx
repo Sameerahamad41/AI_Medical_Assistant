@@ -109,26 +109,29 @@ export default function SosPage() {
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
     try {
-      // Find hospitals within 5000 meters
-      const query = `[out:json];node(around:5000,${lat},${lon})[amenity=hospital];out;`
+      // Find hospitals within 10000 meters (10km), using nwr (node/way/relation) to catch building polygons
+      const query = `[out:json];nwr(around:10000,${lat},${lon})[amenity=hospital];out center;`
       const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
       const data = await res.json()
       
       const hospitalList = data.elements.map(el => {
+        const elLat = el.lat || el.center?.lat
+        const elLon = el.lon || el.center?.lon
+        
         // Calculate rough distance (Haversine approximation for display)
-        const dLat = (el.lat - lat) * Math.PI / 180
-        const dLon = (el.lon - lon) * Math.PI / 180
+        const dLat = (elLat - lat) * Math.PI / 180
+        const dLon = (elLon - lon) * Math.PI / 180
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat * Math.PI / 180) * Math.cos(el.lat * Math.PI / 180) *
+                  Math.cos(lat * Math.PI / 180) * Math.cos(elLat * Math.PI / 180) *
                   Math.sin(dLon/2) * Math.sin(dLon/2)
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
         const distKm = 6371 * c
         
         return {
           id: el.id,
-          name: el.tags.name || 'Unnamed Hospital/Clinic',
-          lat: el.lat,
-          lon: el.lon,
+          name: el.tags?.name || 'Unnamed Hospital/Clinic',
+          lat: elLat,
+          lon: elLon,
           distance: distKm.toFixed(1)
         }
       }).sort((a, b) => a.distance - b.distance).slice(0, 5) // Top 5 closest
