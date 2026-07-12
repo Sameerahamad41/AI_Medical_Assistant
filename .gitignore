@@ -1,0 +1,15 @@
+# IDE and OS files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Master ignore for safety
+.env
+.env.local
+.env.*.local
