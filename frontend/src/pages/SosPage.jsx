@@ -129,9 +129,13 @@ export default function SosPage() {
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
     try {
-      // Find hospitals via our backend proxy to avoid CORS
-      const res = await locationService.getNearbyHospitals(lat, lon)
-      const data = res.data
+      // Fetch hospitals directly from user's browser to bypass Render IP bans
+      const query = `[out:json];(nwr(around:10000,${lat},${lon})[amenity=hospital];nwr(around:10000,${lat},${lon})[amenity=clinic];);out center;`
+      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
+      
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Overpass API returned an error')
+      const data = await res.json()
       
       const hospitalList = data.elements.map(el => {
         const elLat = el.lat || el.center?.lat
