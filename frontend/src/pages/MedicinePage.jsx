@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { medicineService } from '../services/services'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import toast from 'react-hot-toast'
 import { FiSearch } from 'react-icons/fi'
 
@@ -89,7 +90,7 @@ export default function MedicinePage() {
             </div>
           </div>
           <div className="prose prose-invert prose-sm max-w-none text-white/80 leading-relaxed">
-            <ReactMarkdown>{result}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{result}</ReactMarkdown>
           </div>
           <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
             <p className="text-yellow-300/70 text-xs">

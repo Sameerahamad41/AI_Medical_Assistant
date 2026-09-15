@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export default function ChatBubble({ message, isUser }) {
   return (
@@ -22,7 +23,7 @@ export default function ChatBubble({ message, isUser }) {
           <p className="text-sm leading-relaxed">{message}</p>
         ) : (
           <div className="text-sm leading-relaxed prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown>{message}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message}</ReactMarkdown>
           </div>
         )}
       </div>

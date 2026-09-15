@@ -57,55 +57,74 @@ export default function SosPage() {
   const [selectedGuide, setSelectedGuide] = useState(null)
 
   useEffect(() => {
-    locateUser()
-  }, [])
+    let watchId;
+    
+    const startTracking = () => {
+      setLocationState(prev => ({ ...prev, loading: true, error: null }))
+      if (!navigator.geolocation) {
+        setLocationState(prev => ({ ...prev, loading: false, error: 'Geolocation is not supported by your browser' }))
+        return
+      }
 
-  const locateUser = () => {
-    setLocationState(prev => ({ ...prev, loading: true, error: null }))
-    if (!navigator.geolocation) {
-      setLocationState(prev => ({ ...prev, loading: false, error: 'Geolocation is not supported by your browser' }))
-      return
+      // watchPosition tracks the user LIVE as they move (like Uber/WhatsApp)
+      watchId = navigator.geolocation.watchPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords
+          try {
+            // Using default zoom (18) for maximum building-level precision
+            const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+            const nomData = await nomRes.json()
+            
+            // Format address: We must remove 'amenity' and 'building' because OpenStreetMap will wrongly 
+            // guess the nearest registered hospital if your specific building isn't in their database!
+            const addr = nomData.address || {}
+            const preciseLocation = [
+              addr.house_number,
+              addr.road,
+              addr.neighbourhood,
+              addr.suburb,
+              addr.city || addr.town,
+              addr.postcode
+            ].filter(Boolean).join(', ')
+            
+            setLocationState({
+              loading: false,
+              error: null,
+              lat: latitude,
+              lon: longitude,
+              address: preciseLocation || nomData.display_name,
+              countryCode: nomData.address?.country_code?.toLowerCase() || 'us'
+            })
+
+            fetchNearbyHospitals(latitude, longitude)
+          } catch (err) {
+            setLocationState(prev => ({
+              ...prev,
+              loading: false,
+              error: 'Failed to fetch address details.',
+              lat: latitude,
+              lon: longitude,
+              address: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`
+            }))
+          }
+        },
+        (error) => {
+          setLocationState(prev => ({ 
+            ...prev, 
+            loading: false, 
+            error: `Location error: ${error.message}.`
+          }))
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // High accuracy for live tracking
+      )
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        try {
-          // Reverse Geocoding
-          const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-          const nomData = await nomRes.json()
-          
-          setLocationState({
-            loading: false,
-            error: null,
-            lat: latitude,
-            lon: longitude,
-            address: nomData.display_name,
-            countryCode: nomData.address?.country_code?.toLowerCase() || 'us'
-          })
+    startTracking()
 
-          fetchNearbyHospitals(latitude, longitude)
-        } catch (err) {
-          setLocationState({
-            loading: false,
-            error: 'Failed to fetch address details. Check internet connection.',
-            lat: latitude,
-            lon: longitude,
-            address: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
-            countryCode: 'us'
-          })
-        }
-      },
-      (error) => {
-        setLocationState(prev => ({ 
-          ...prev, 
-          loading: false, 
-          error: `Location error: ${error.message}. If blocked, check browser settings.`
-        }))
-      },
-      { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 }
-    )
-  }
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId)
+    }
+  }, [])
 
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
@@ -185,15 +204,20 @@ export default function SosPage() {
               
               <div className="w-full md:w-auto flex-1 md:border-l md:border-red-500/20 md:pl-8">
                 <p className="text-red-400/80 font-medium uppercase tracking-wider text-sm mb-2 flex items-center gap-2">
-                  <FiMapPin /> Your Exact Location
+                  <FiMapPin /> 
+                  Live Tracking Location
+                  <span className="flex h-2 w-2 relative ml-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
                 </p>
                 
                 {locationState.loading ? (
-                  <div className="text-red-300 animate-pulse text-xl font-medium">Locating you via GPS...</div>
+                  <div className="text-red-300 animate-pulse text-xl font-medium">Tracking your GPS...</div>
                 ) : locationState.error ? (
                   <div className="text-red-400 bg-red-900/30 p-3 rounded-xl border border-red-500/30">
                     {locationState.error}
-                    <button onClick={locateUser} className="block mt-2 text-sm underline">Try Again</button>
+                    <button onClick={() => window.location.reload()} className="block mt-2 text-sm underline">Restart Tracking</button>
                   </div>
                 ) : (
                   <div>
@@ -213,7 +237,7 @@ export default function SosPage() {
                         target="_blank" rel="noreferrer"
                         className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors border border-white/10"
                       >
-                        <FiNavigation /> Share Map
+                        <FiNavigation /> Share Live Map
                       </a>
                     </div>
                   </div>
