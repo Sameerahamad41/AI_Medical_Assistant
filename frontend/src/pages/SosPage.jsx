@@ -125,6 +125,10 @@ export default function SosPage() {
       const res = await locationService.getNearbyHospitals(lat, lon)
       const data = res.data
       
+      if (!data || !data.elements) {
+        throw new Error(data?.error || 'Invalid map data returned')
+      }
+      
       const hospitalList = data.elements.map(el => {
         const elLat = el.lat || el.center?.lat
         const elLon = el.lon || el.center?.lon

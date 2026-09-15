@@ -15,7 +15,7 @@ public class LocationController {
     public ResponseEntity<String> getNearbyHospitals(@RequestParam double lat, @RequestParam double lon) {
         try {
             String query = String.format("[out:json];(nwr(around:10000,%s,%s)[amenity=hospital];nwr(around:10000,%s,%s)[amenity=clinic];);out center;", lat, lon, lat, lon);
-            String url = "https://overpass-api.de/api/interpreter";
+            String url = "https://lz4.overpass-api.de/api/interpreter";
 
             RestTemplate restTemplate = new RestTemplate();
             
