@@ -128,7 +128,9 @@ export default function SosPage() {
       const top = lat + offset;
       const bottom = lat - offset;
       
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=hospital&viewbox=${left},${top},${right},${bottom}&bounded=1&limit=5`
+      // Increase limit to 50 because Nominatim sorts by "Importance" (biggest hospitals first).
+      // We need to fetch many so we can manually sort them by exact Distance!
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=hospital&viewbox=${left},${top},${right},${bottom}&bounded=1&limit=50`
       const res = await fetch(url)
       
       if (!res.ok) throw new Error('Nominatim API returned an error')
