@@ -120,18 +120,27 @@ export default function SosPage() {
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
     try {
-      // The Java Backend has now fully finished deploying on Render with the URI fix!
-      // We are securely routing this through your backend to avoid Vercel's strict CORS rules.
-      const res = await locationService.getNearbyHospitals(lat, lon)
-      const data = res.data
+      // Use Nominatim API for hospitals since Overpass strictly bans Vercel and Render cloud IPs
+      // Create a 10km bounding box (0.1 degrees is roughly 11km)
+      const offset = 0.05; 
+      const left = lon - offset;
+      const right = lon + offset;
+      const top = lat + offset;
+      const bottom = lat - offset;
       
-      if (!data || !data.elements) {
-        throw new Error(data?.error || 'Invalid map data returned')
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=hospital&viewbox=${left},${top},${right},${bottom}&bounded=1&limit=5`
+      const res = await fetch(url)
+      
+      if (!res.ok) throw new Error('Nominatim API returned an error')
+      const data = await res.json()
+      
+      if (!data || data.length === 0) {
+        throw new Error('No hospitals found in this area')
       }
       
-      const hospitalList = data.elements.map(el => {
-        const elLat = el.lat || el.center?.lat
-        const elLon = el.lon || el.center?.lon
+      const hospitalList = data.map(el => {
+        const elLat = parseFloat(el.lat)
+        const elLon = parseFloat(el.lon)
         
         // Calculate rough distance (Haversine approximation for display)
         const dLat = (elLat - lat) * Math.PI / 180
@@ -143,8 +152,8 @@ export default function SosPage() {
         const distKm = 6371 * c
         
         return {
-          id: el.id,
-          name: el.tags?.name || 'Unnamed Hospital/Clinic',
+          id: el.place_id,
+          name: el.name || 'Unnamed Hospital',
           lat: elLat,
           lon: elLon,
           distance: distKm.toFixed(1)
