@@ -57,26 +57,21 @@ export default function SosPage() {
   const [selectedGuide, setSelectedGuide] = useState(null)
 
   useEffect(() => {
-    let watchId;
-    
-    const startTracking = () => {
+    const locateUser = () => {
       setLocationState(prev => ({ ...prev, loading: true, error: null }))
       if (!navigator.geolocation) {
         setLocationState(prev => ({ ...prev, loading: false, error: 'Geolocation is not supported by your browser' }))
         return
       }
 
-      // watchPosition tracks the user LIVE as they move (like Uber/WhatsApp)
-      watchId = navigator.geolocation.watchPosition(
+      // Using getCurrentPosition to avoid spamming the Map API.
+      navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords
           try {
-            // Using default zoom (18) for maximum building-level precision
             const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
             const nomData = await nomRes.json()
             
-            // Format address: We must remove 'amenity' and 'building' because OpenStreetMap will wrongly 
-            // guess the nearest registered hospital if your specific building isn't in their database!
             const addr = nomData.address || {}
             const preciseLocation = [
               addr.house_number,
@@ -115,15 +110,11 @@ export default function SosPage() {
             error: `Location error: ${error.message}.`
           }))
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // High accuracy for live tracking
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       )
     }
 
-    startTracking()
-
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId)
-    }
+    locateUser()
   }, [])
 
   const fetchNearbyHospitals = async (lat, lon) => {
