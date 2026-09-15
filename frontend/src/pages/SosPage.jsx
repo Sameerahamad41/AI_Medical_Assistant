@@ -120,11 +120,18 @@ export default function SosPage() {
   const fetchNearbyHospitals = async (lat, lon) => {
     setLoadingHospitals(true)
     try {
-      // Fetch hospitals directly from user's browser to bypass Render IP bans
+      // Fetch hospitals directly using POST request to avoid URL encoding/CORS issues on Vercel
       const query = `[out:json];(nwr(around:10000,${lat},${lon})[amenity=hospital];nwr(around:10000,${lat},${lon})[amenity=clinic];);out center;`
-      const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
+      const url = `https://overpass-api.de/api/interpreter`
       
-      const res = await fetch(url)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `data=${encodeURIComponent(query)}`
+      })
+      
       if (!res.ok) throw new Error('Overpass API returned an error')
       const data = await res.json()
       
